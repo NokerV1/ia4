@@ -1,6 +1,6 @@
 --[[
     Infinite Admin V4 (Mobile Responsive) — Executor Build
-    Press RIGHT SHIFT (or tap top right on mobile) to toggle. Console: ;command [arg]
+    Press RIGHT SHIFT (or tap 'M' on mobile) to toggle. Console: ;command [arg]
 ]]
 
 if not game or not game.Players then
@@ -102,9 +102,9 @@ end
 local viewport = Workspace.CurrentCamera.ViewportSize
 local isMobile = UIS.TouchEnabled and not UIS.MouseEnabled
 
-local W = isMobile and math.min(viewport.X - 40, 600) or 680
-local H = isMobile and math.min(viewport.Y - 40, 480) or 480
-local sidebarW = isMobile and 70 or 170
+local W = isMobile and math.min(viewport.X - 20, 340) or 680
+local H = isMobile and math.min(viewport.Y - 40, 420) or 480
+local sidebarW = isMobile and 50 or 170
 
 local Main = New("Frame",{
     Size=UDim2.new(0, W, 0, H),
@@ -116,8 +116,8 @@ Tween(Blur,.3,{Size=6})
 
 local function resizeUI()
     local vp = Workspace.CurrentCamera.ViewportSize
-    local nW = isMobile and math.min(vp.X - 40, 600) or 680
-    local nH = isMobile and math.min(vp.Y - 40, 480) or 480
+    local nW = isMobile and math.min(vp.X - 20, 340) or 680
+    local nH = isMobile and math.min(vp.Y - 40, 420) or 480
     Main.Size = UDim2.new(0, nW, 0, nH)
     Main.Position = UDim2.new(.5, -nW/2, .5, -nH/2)
     W, H = nW, nH
@@ -139,18 +139,18 @@ end
 local CloseBtn = New("TextButton",{Size=UDim2.new(0,30,0,30),Position=UDim2.new(1,-42,.5,-15),BackgroundColor3=T.Surface,Text="✕",TextColor3=T.Sub,Font=Enum.Font.GothamBold,TextSize=13,AutoButtonColor=false,Parent=TopBar}); Corner(8)
 CloseBtn.MouseButton1Click:Connect(function() Main.Visible=false; Blur.Size=0 end)
 
-local Sidebar = New("Frame",{Size=UDim2.new(0,sidebarW,1,-58),Position=UDim2.new(0,10,0,52),BackgroundColor3=T.Bg2,BorderSizePixel=0,Parent=Main}); Corner(10)
+local Sidebar = New("Frame",{Size=UDim2.new(0,sidebarW,1,-58),Position=UDim2.new(0,6,0,52),BackgroundColor3=T.Bg2,BorderSizePixel=0,Parent=Main}); Corner(10)
 New("UIListLayout",{Padding=UDim.new(0,3),SortOrder=Enum.SortOrder.LayoutOrder,Parent=Sidebar})
-New("UIPadding",{PaddingTop=UDim.new(0,8),PaddingLeft=UDim.new(0,8),PaddingRight=UDim.new(0,8),PaddingBottom=UDim.new(0,8),Parent=Sidebar})
+New("UIPadding",{PaddingTop=UDim.new(0,6),PaddingLeft=UDim.new(0,4),PaddingRight=UDim.new(0,4),PaddingBottom=UDim.new(0,6),Parent=Sidebar})
 
-local Content = New("Frame",{Size=UDim2.new(1,-(sidebarW+20),1,-100),Position=UDim2.new(0,sidebarW+10,0,52),BackgroundTransparency=1,Parent=Main})
+local Content = New("Frame",{Size=UDim2.new(1,-(sidebarW+14),1,-100),Position=UDim2.new(0,sidebarW+8,0,52),BackgroundTransparency=1,Parent=Main})
 local SearchWrap = New("Frame",{Size=UDim2.new(1,0,0,38),BackgroundColor3=T.Bg2,BorderSizePixel=0,Parent=Content}); Corner(9); Stroke(T.Stroke,1).Parent = SearchWrap
 New("TextLabel",{Size=UDim2.new(0,34,1,0),BackgroundTransparency=1,Text="🔍",TextSize=14,TextColor3=T.Sub,Parent=SearchWrap})
 local SearchBox = New("TextBox",{Size=UDim2.new(1,-42,1,0),Position=UDim2.new(0,36,0,0),BackgroundTransparency=1,Text="",PlaceholderText="Search commands...",PlaceholderColor3=T.Sub,TextColor3=T.Text,Font=Enum.Font.GothamMedium,TextSize=13,TextXAlignment=Enum.TextXAlignment.Left,ClearTextOnFocus=false,Parent=SearchWrap})
 local Scroll = New("ScrollingFrame",{Size=UDim2.new(1,0,1,-48),Position=UDim2.new(0,0,0,46),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=4,ScrollBarImageColor3=T.Accent,CanvasSize=UDim2.new(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,Parent=Content})
 New("UIListLayout",{Padding=UDim.new(0,4),SortOrder=Enum.SortOrder.LayoutOrder,Parent=Scroll})
 
-local ConsoleBar = New("Frame",{Size=UDim2.new(1,-(sidebarW+20),0,38),Position=UDim2.new(0,sidebarW+10,1,-48),BackgroundColor3=T.Bg2,BorderSizePixel=0,Parent=Main}); Corner(9); Stroke(T.Accent,1).Parent = ConsoleBar
+local ConsoleBar = New("Frame",{Size=UDim2.new(1,-(sidebarW+14),0,38),Position=UDim2.new(0,sidebarW+8,1,-48),BackgroundColor3=T.Bg2,BorderSizePixel=0,Parent=Main}); Corner(9); Stroke(T.Accent,1).Parent = ConsoleBar
 New("TextLabel",{Size=UDim2.new(0,26,1,0),BackgroundTransparency=1,Text="›",TextColor3=T.Accent,Font=Enum.Font.GothamBold,TextSize=20,Parent=ConsoleBar})
 local ConsoleBox = New("TextBox",{Size=UDim2.new(1,-30,1,0),Position=UDim2.new(0,24,0,0),BackgroundTransparency=1,Text="",PlaceholderText=";command arg",PlaceholderColor3=T.Sub,TextColor3=T.Text,Font=Enum.Font.Code,TextSize=13,TextXAlignment=Enum.TextXAlignment.Left,ClearTextOnFocus=false,Parent=ConsoleBar})
 
@@ -949,7 +949,7 @@ for _,c in ipairs({
 }) do C("Misc", c[1], c[2], Safe(c[3])) end
 
 -- =========================================================
--- BUILD SIDEBAR + CONTENT
+-- BUILD SIDEBAR + CONTENT (UPDATED FOR MOBILE)
 -- =========================================================
 local TabOrder = {"Home","Player","Movement","Combat","World","Visual","Teleport","Vehicles","Fun","Misc"}
 local TabIcons = {Home="🏠",Player="👤",Movement="🏃",Combat="⚔️",World="🌍",Visual="🎨",Teleport="✈️",Vehicles="🚗",Fun="🎮",Misc="⚙️"}
@@ -970,9 +970,14 @@ local function RefreshList()
             local row = New("TextButton",{Size=UDim2.new(1,-6,0,42),BackgroundColor3=T.Surface,Text="",AutoButtonColor=false,LayoutOrder=i,Parent=Scroll})
             Corner(9)
             local s = Stroke(T.Stroke,1); s.Parent = row
-            New("TextLabel",{Size=UDim2.new(1,-30,0,20),Position=UDim2.new(0,14,0,4),BackgroundTransparency=1,Text=cmd.name,TextColor3=T.Text,Font=Enum.Font.GothamSemibold,TextSize=12.5,TextXAlignment=Enum.TextXAlignment.Left,Parent=row})
-            New("TextLabel",{Size=UDim2.new(1,-30,0,16),Position=UDim2.new(0,14,0,22),BackgroundTransparency=1,Text=cmd.desc,TextColor3=T.Sub,Font=Enum.Font.Gotham,TextSize=10.5,TextXAlignment=Enum.TextXAlignment.Left,Parent=row})
+            
+            local nameSize = isMobile and 11 or 12.5
+            local descSize = isMobile and 9 or 10.5
+            
+            New("TextLabel",{Size=UDim2.new(1,-30,0,20),Position=UDim2.new(0,10,0,4),BackgroundTransparency=1,Text=cmd.name,TextColor3=T.Text,Font=Enum.Font.GothamSemibold,TextSize=nameSize,TextXAlignment=Enum.TextXAlignment.Left,Parent=row})
+            New("TextLabel",{Size=UDim2.new(1,-30,0,16),Position=UDim2.new(0,10,0,22),BackgroundTransparency=1,Text=cmd.desc,TextColor3=T.Sub,Font=Enum.Font.Gotham,TextSize=descSize,TextXAlignment=Enum.TextXAlignment.Left,Parent=row})
             local arrow = New("TextLabel",{Size=UDim2.new(0,20,1,0),Position=UDim2.new(1,-28,0,0),BackgroundTransparency=1,Text="›",TextColor3=T.Sub,Font=Enum.Font.GothamBold,TextSize=18,Parent=row})
+            
             row.MouseEnter:Connect(function() Tween(row,.15,{BackgroundColor3=T.Surface2}); Tween(s,.15,{Color=T.Accent}); Tween(arrow,.15,{TextColor3=T.Accent}) end)
             row.MouseLeave:Connect(function() Tween(row,.15,{BackgroundColor3=T.Surface}); Tween(s,.15,{Color=T.Stroke}); Tween(arrow,.15,{TextColor3=T.Sub}) end)
             row.MouseButton1Click:Connect(function()
@@ -996,16 +1001,14 @@ local function SelectTab(name)
 end
 
 for i,tab in ipairs(TabOrder) do
-    local count = 0
-    for _,c in ipairs(Commands) do if c.tab == tab then count = count + 1 end end
     local Btn = New("TextButton",{Size=UDim2.new(1,0,0,30),BackgroundColor3=T.Surface,Text="",AutoButtonColor=false,LayoutOrder=i,Parent=Sidebar})
     Corner(8)
-    New("TextLabel",{Size=UDim2.new(0,24,1,0),Position=UDim2.new(0,6,0,0),BackgroundTransparency=1,Text=TabIcons[tab] or "•",TextSize=13,Parent=Btn})
+    New("TextLabel",{Name="Icon",Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text=TabIcons[tab] or "•",TextSize=isMobile and 16 or 13,Parent=Btn})
     
-    -- Only render the text label on desktop (mobile sidebar is icon-only)
     if not isMobile then
+        Btn:FindFirstChild("Icon").Size = UDim2.new(0,24,1,0)
+        Btn:FindFirstChild("Icon").Position = UDim2.new(0,6,0,0)
         New("TextLabel",{Name="TabLabel",Size=UDim2.new(1,-56,1,0),Position=UDim2.new(0,28,0,0),BackgroundTransparency=1,Text=tab,TextColor3=T.Sub,Font=Enum.Font.GothamMedium,TextSize=12,TextXAlignment=Enum.TextXAlignment.Left,Parent=Btn})
-        New("TextLabel",{Size=UDim2.new(0,24,1,0),Position=UDim2.new(1,-28,0,0),BackgroundTransparency=1,Text=tostring(count),TextColor3=T.Accent,Font=Enum.Font.Gotham,TextSize=10,TextXAlignment=Enum.TextXAlignment.Right,Parent=Btn})
     end
 
     Btn.MouseEnter:Connect(function() if ActiveTab ~= tab then Tween(Btn,.15,{BackgroundColor3=T.Surface2}) end end)
@@ -1073,19 +1076,18 @@ end)
 CmdCount.Text = "• "..#Commands.." commands"
 SelectTab("Home")
 
--- ▼ Mobile Toggle Button — because phones don't have RSHIFT.
 if isMobile then
     local toggleBtn = New("TextButton",{
-        Size=UDim2.new(0, 50, 0, 50),
-        Position=UDim2.new(1, -70, 0, 70),
+        Size=UDim2.new(0, 44, 0, 44),
+        Position=UDim2.new(1, -54, 0, 54),
         BackgroundColor3=T.Accent,
-        Text="☰",
+        Text="M",
         TextColor3=T.Text,
         Font=Enum.Font.GothamBold,
-        TextSize=24,
+        TextSize=20,
         Parent=ScreenGui
     })
-    Corner(25)
+    Corner(22)
     toggleBtn.MouseButton1Click:Connect(function()
         Main.Visible = not Main.Visible
         if Main.Visible then
@@ -1098,4 +1100,4 @@ if isMobile then
     end)
 end
 
-print("[InfiniteAdminV4] Loaded — "..#Commands.." commands. RSHIFT (or ☰) toggles.")
+print("[InfiniteAdminV4] Loaded — " .. (isMobile and "Mobile Mode" or "Desktop Mode"))
