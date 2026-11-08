@@ -137,7 +137,15 @@ local function SetStatus(txt,ok)
     task.delay(1.5,function() StatusLbl.Text="Ready"; StatusLbl.TextColor3=T.Sub; StatusDot.BackgroundColor3=T.Success end)
 end
 local CloseBtn = New("TextButton",{Size=UDim2.new(0,30,0,30),Position=UDim2.new(1,-42,.5,-15),BackgroundColor3=T.Surface,Text="✕",TextColor3=T.Sub,Font=Enum.Font.GothamBold,TextSize=13,AutoButtonColor=false,Parent=TopBar}); Corner(8)
-CloseBtn.MouseButton1Click:Connect(function() Main.Visible=false; Blur.Size=0 end)
+CloseBtn.MouseButton1Click:Connect(function()
+    local t = Tween(Main, .18, {Size = UDim2.new(0, 0, 0, 0)}, Enum.EasingStyle.Quint)
+    t:Play()
+    t.Completed:Connect(function()
+        Main.Visible = false
+        Main.Size = UDim2.new(0, W, 0, H)
+    end)
+    Tween(Blur, .18, {Size = 0}):Play()
+end)
 
 local Sidebar = New("Frame",{Size=UDim2.new(0,sidebarW,1,-58),Position=UDim2.new(0,6,0,52),BackgroundColor3=T.Bg2,BorderSizePixel=0,Parent=Main}); Corner(10)
 New("UIListLayout",{Padding=UDim.new(0,3),SortOrder=Enum.SortOrder.LayoutOrder,Parent=Sidebar})
@@ -271,7 +279,12 @@ for _,c in ipairs({
     {"Copy Game Link","Copy game URL", function() if setclipboard then setclipboard("https://www.roblox.com/games/"..game.PlaceId) end Notify("Copied","ok") end},
     {"Ping","Show ping", function() Notify("Ping "..math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()).."ms","info") end},
     {"FPS Counter","Print FPS", function() local t=os.clock(); for _=1,30 do RunService.RenderStepped:Wait() end Notify("FPS "..math.floor(30/(os.clock()-t)),"info") end},
-    {"Hide GUI","Hide window", function() Main.Visible=false; Blur.Size=0 end},
+    {"Hide GUI","Hide window", function()
+        local t = Tween(Main, .18, {Size = UDim2.new(0, 0, 0, 0)}, Enum.EasingStyle.Quint)
+        t:Play()
+        t.Completed:Connect(function() Main.Visible = false; Main.Size = UDim2.new(0, W, 0, H) end)
+        Tween(Blur, .18, {Size = 0}):Play()
+    end},
     {"Anti-AFK","Prevent AFK kick", function()
         LP.Idled:Connect(function() VirtualUser:CaptureController(); VirtualUser:ClickButton2(Vector2.new()) end)
         Notify("Anti-AFK on","ok")
@@ -970,14 +983,14 @@ local function RefreshList()
             local row = New("TextButton",{Size=UDim2.new(1,-6,0,42),BackgroundColor3=T.Surface,Text="",AutoButtonColor=false,LayoutOrder=i,Parent=Scroll})
             Corner(9)
             local s = Stroke(T.Stroke,1); s.Parent = row
-            
+
             local nameSize = isMobile and 11 or 12.5
             local descSize = isMobile and 9 or 10.5
-            
+
             New("TextLabel",{Size=UDim2.new(1,-30,0,20),Position=UDim2.new(0,10,0,4),BackgroundTransparency=1,Text=cmd.name,TextColor3=T.Text,Font=Enum.Font.GothamSemibold,TextSize=nameSize,TextXAlignment=Enum.TextXAlignment.Left,Parent=row})
             New("TextLabel",{Size=UDim2.new(1,-30,0,16),Position=UDim2.new(0,10,0,22),BackgroundTransparency=1,Text=cmd.desc,TextColor3=T.Sub,Font=Enum.Font.Gotham,TextSize=descSize,TextXAlignment=Enum.TextXAlignment.Left,Parent=row})
             local arrow = New("TextLabel",{Size=UDim2.new(0,20,1,0),Position=UDim2.new(1,-28,0,0),BackgroundTransparency=1,Text="›",TextColor3=T.Sub,Font=Enum.Font.GothamBold,TextSize=18,Parent=row})
-            
+
             row.MouseEnter:Connect(function() Tween(row,.15,{BackgroundColor3=T.Surface2}); Tween(s,.15,{Color=T.Accent}); Tween(arrow,.15,{TextColor3=T.Accent}) end)
             row.MouseLeave:Connect(function() Tween(row,.15,{BackgroundColor3=T.Surface}); Tween(s,.15,{Color=T.Stroke}); Tween(arrow,.15,{TextColor3=T.Sub}) end)
             row.MouseButton1Click:Connect(function()
@@ -1004,7 +1017,7 @@ for i,tab in ipairs(TabOrder) do
     local Btn = New("TextButton",{Size=UDim2.new(1,0,0,30),BackgroundColor3=T.Surface,Text="",AutoButtonColor=false,LayoutOrder=i,Parent=Sidebar})
     Corner(8)
     New("TextLabel",{Name="Icon",Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text=TabIcons[tab] or "•",TextSize=isMobile and 16 or 13,Parent=Btn})
-    
+
     if not isMobile then
         Btn:FindFirstChild("Icon").Size = UDim2.new(0,24,1,0)
         Btn:FindFirstChild("Icon").Position = UDim2.new(0,6,0,0)
@@ -1059,45 +1072,59 @@ UIS.InputChanged:Connect(function(i)
     end
 end)
 
+-- =========================================================
+-- TOGGLE — shared open/close (fixes show/hide button bug)
+-- =========================================================
+local function openPanel()
+    Main.Visible = true
+    Main.Size = UDim2.new(0, 0, 0, 0)
+    Tween(Main, .28, {Size = UDim2.new(0, W, 0, H)}, Enum.EasingStyle.Back):Play()
+    Tween(Blur, .25, {Size = 6}):Play()
+end
+
+local function closePanel()
+    -- shrink first so there's no snap-to-invisible flash
+    local t = Tween(Main, .18, {Size = UDim2.new(0, 0, 0, 0)}, Enum.EasingStyle.Quint)
+    t:Play()
+    t.Completed:Connect(function()
+        Main.Visible = false
+        Main.Size = UDim2.new(0, W, 0, H)  -- restore so next openPanel starts from zero correctly
+    end)
+    Tween(Blur, .18, {Size = 0}):Play()
+end
+
 UIS.InputBegan:Connect(function(i, gp)
     if gp then return end
     if i.KeyCode == Enum.KeyCode.RightShift then
-        Main.Visible = not Main.Visible
-        if Main.Visible then
-            Main.Size=UDim2.new(0,0,0,0)
-            Tween(Main,.28,{Size=UDim2.new(0,W,0,H)},Enum.EasingStyle.Back)
-            Tween(Blur,.25,{Size=6})
-        else
-            Blur.Size=0
-        end
+        if Main.Visible then closePanel() else openPanel() end
     end
 end)
 
-CmdCount.Text = "• "..#Commands.." commands"
-SelectTab("Home")
-
 if isMobile then
-    local toggleBtn = New("TextButton",{
-        Size=UDim2.new(0, 44, 0, 44),
-        Position=UDim2.new(1, -54, 0, 54),
-        BackgroundColor3=T.Accent,
-        Text="M",
-        TextColor3=T.Text,
-        Font=Enum.Font.GothamBold,
-        TextSize=20,
-        Parent=ScreenGui
+    local toggleBtn = New("TextButton", {
+        Size             = UDim2.new(0, 44, 0, 44),
+        Position         = UDim2.new(1, -54, 0, 54),
+        BackgroundColor3 = T.Accent,
+        Text             = "M",
+        TextColor3       = T.Text,
+        Font             = Enum.Font.GothamBold,
+        TextSize         = 20,
+        ZIndex           = 10,   -- sit above Main (default ZIndex 1)
+        Parent           = ScreenGui,
     })
     Corner(22)
+
+    -- track any runtime ZIndex bumps on Main and stay above them
+    Main:GetPropertyChangedSignal("ZIndex"):Connect(function()
+        toggleBtn.ZIndex = Main.ZIndex + 1
+    end)
+
     toggleBtn.MouseButton1Click:Connect(function()
-        Main.Visible = not Main.Visible
-        if Main.Visible then
-            Main.Size=UDim2.new(0,0,0,0)
-            Tween(Main,.28,{Size=UDim2.new(0,W,0,H)},Enum.EasingStyle.Back)
-            Tween(Blur,.25,{Size=6})
-        else
-            Blur.Size=0
-        end
+        if Main.Visible then closePanel() else openPanel() end
     end)
 end
+
+CmdCount.Text = "• "..#Commands.." commands"
+SelectTab("Home")
 
 print("[InfiniteAdminV4] Loaded — " .. (isMobile and "Mobile Mode" or "Desktop Mode"))
