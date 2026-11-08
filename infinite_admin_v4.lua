@@ -1,11 +1,8 @@
 --[[
-    Infinite Admin V4 (Fixed + Loader-Hardened) — Executor Build
-    Press RIGHT SHIFT to toggle. Console: ;command [arg]
-    Runs in any executor with `game:HttpGet` / `syn` / `fluxus` / `request`.
-    Read the "notes" block at the bottom before running.
+    Infinite Admin V4 (Mobile Responsive) — Executor Build
+    Press RIGHT SHIFT (or tap top right on mobile) to toggle. Console: ;command [arg]
 ]]
 
--- ▼▼ BOOTSTRAP — bail clean if the executor can't even resolve services
 if not game or not game.Players then
     return warn("[IA4] Not in a Roblox environment.")
 end
@@ -25,14 +22,9 @@ local StarterGui       = game:GetService("StarterGui")
 local Stats            = game:GetService("Stats")
 local LP               = Players.LocalPlayer
 
--- ▼ Resolve the GUI parent BEFORE creating any GuiObject.
---   CoreGui path fails in Studio; PlayerGui fails under some executors that
---   sandbox CoreGui. Try CoreGui, fall back, and never create the ScreenGui
---   until we know where it goes.
 local function getGuiParent()
     local ok, cg = pcall(function() return game:GetService("CoreGui") end)
     if ok and cg then
-        -- Probe: can we actually parent here? A dummy Folder is cheap and safe.
         local probe = Instance.new("Folder")
         local ok2 = pcall(function() probe.Parent = cg end)
         probe:Destroy()
@@ -42,9 +34,6 @@ local function getGuiParent()
 end
 local GuiParent = getGuiParent()
 
--- ▼ protect_gui MUST run on an unparented instance. Some executors also
---   refuse to protect a gui already under PlayerGui. Order: create →
---   protect → parent.
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "InfiniteAdminV4"
 ScreenGui.ResetOnSpawn = false
@@ -55,7 +44,6 @@ ScreenGui.DisplayOrder = 999
 pcall(function()
     local protector = (syn and syn.protect_gui) or protect_gui or gethui
     if protector then
-        -- gethui is the safest: hidden from game scripts.
         if protector == gethui then
             ScreenGui.Parent = protector()
         else
@@ -66,15 +54,11 @@ pcall(function()
 end)
 if not ScreenGui.Parent then ScreenGui.Parent = GuiParent end
 
--- Wipe a previous instance if one survived (re-exec).
 pcall(function()
     local prev = GuiParent:FindFirstChild("InfiniteAdminV4")
     if prev and prev ~= ScreenGui then prev:Destroy() end
 end)
 
--- =========================================================
--- THEME + UTILS
--- =========================================================
 local T = {
     Bg=Color3.fromRGB(15,15,20), Bg2=Color3.fromRGB(22,22,30),
     Surface=Color3.fromRGB(30,30,40), Surface2=Color3.fromRGB(40,40,54),
@@ -113,20 +97,32 @@ local function Notify(msg, kind)
 end
 
 -- =========================================================
--- GUI SHELL
+-- GUI SHELL (RESPONSIVE)
 -- =========================================================
-local W,H = 680, 480
+local viewport = Workspace.CurrentCamera.ViewportSize
+local isMobile = UIS.TouchEnabled and not UIS.MouseEnabled
+
+local W = isMobile and math.min(viewport.X - 40, 600) or 680
+local H = isMobile and math.min(viewport.Y - 40, 480) or 480
+local sidebarW = isMobile and 70 or 170
+
 local Main = New("Frame",{
-    Size=UDim2.new(0,0,0,0),
-    Position=UDim2.new(.5,-W/2,.5,-H/2),
+    Size=UDim2.new(0, W, 0, H),
+    Position=UDim2.new(.5, -W/2, .5, -H/2),
     BackgroundColor3=T.Bg, BorderSizePixel=0, Parent=ScreenGui,
 })
 Corner(14); Stroke(T.Stroke,1).Parent = Main
-task.defer(function()
-    task.wait()
-    Tween(Main,.32,{Size=UDim2.new(0,W,0,H)},Enum.EasingStyle.Back)
-    Tween(Blur,.3,{Size=6})
-end)
+Tween(Blur,.3,{Size=6})
+
+local function resizeUI()
+    local vp = Workspace.CurrentCamera.ViewportSize
+    local nW = isMobile and math.min(vp.X - 40, 600) or 680
+    local nH = isMobile and math.min(vp.Y - 40, 480) or 480
+    Main.Size = UDim2.new(0, nW, 0, nH)
+    Main.Position = UDim2.new(.5, -nW/2, .5, -nH/2)
+    W, H = nW, nH
+end
+Workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(resizeUI)
 
 local TopBar = New("Frame",{Size=UDim2.new(1,0,0,48),BackgroundColor3=T.Bg2,BorderSizePixel=0,Parent=Main}); Corner(14)
 New("Frame",{Size=UDim2.new(1,0,0,14),Position=UDim2.new(0,0,1,-14),BackgroundColor3=T.Bg2,BorderSizePixel=0,Parent=TopBar})
@@ -141,22 +137,20 @@ local function SetStatus(txt,ok)
     task.delay(1.5,function() StatusLbl.Text="Ready"; StatusLbl.TextColor3=T.Sub; StatusDot.BackgroundColor3=T.Success end)
 end
 local CloseBtn = New("TextButton",{Size=UDim2.new(0,30,0,30),Position=UDim2.new(1,-42,.5,-15),BackgroundColor3=T.Surface,Text="✕",TextColor3=T.Sub,Font=Enum.Font.GothamBold,TextSize=13,AutoButtonColor=false,Parent=TopBar}); Corner(8)
-CloseBtn.MouseEnter:Connect(function() Tween(CloseBtn,.15,{BackgroundColor3=T.Danger,TextColor3=T.Text}) end)
-CloseBtn.MouseLeave:Connect(function() Tween(CloseBtn,.15,{BackgroundColor3=T.Surface,TextColor3=T.Sub}) end)
 CloseBtn.MouseButton1Click:Connect(function() Main.Visible=false; Blur.Size=0 end)
 
-local Sidebar = New("Frame",{Size=UDim2.new(0,170,1,-58),Position=UDim2.new(0,10,0,52),BackgroundColor3=T.Bg2,BorderSizePixel=0,Parent=Main}); Corner(10)
+local Sidebar = New("Frame",{Size=UDim2.new(0,sidebarW,1,-58),Position=UDim2.new(0,10,0,52),BackgroundColor3=T.Bg2,BorderSizePixel=0,Parent=Main}); Corner(10)
 New("UIListLayout",{Padding=UDim.new(0,3),SortOrder=Enum.SortOrder.LayoutOrder,Parent=Sidebar})
 New("UIPadding",{PaddingTop=UDim.new(0,8),PaddingLeft=UDim.new(0,8),PaddingRight=UDim.new(0,8),PaddingBottom=UDim.new(0,8),Parent=Sidebar})
 
-local Content = New("Frame",{Size=UDim2.new(1,-192,1,-100),Position=UDim2.new(0,188,0,52),BackgroundTransparency=1,Parent=Main})
+local Content = New("Frame",{Size=UDim2.new(1,-(sidebarW+20),1,-100),Position=UDim2.new(0,sidebarW+10,0,52),BackgroundTransparency=1,Parent=Main})
 local SearchWrap = New("Frame",{Size=UDim2.new(1,0,0,38),BackgroundColor3=T.Bg2,BorderSizePixel=0,Parent=Content}); Corner(9); Stroke(T.Stroke,1).Parent = SearchWrap
 New("TextLabel",{Size=UDim2.new(0,34,1,0),BackgroundTransparency=1,Text="🔍",TextSize=14,TextColor3=T.Sub,Parent=SearchWrap})
 local SearchBox = New("TextBox",{Size=UDim2.new(1,-42,1,0),Position=UDim2.new(0,36,0,0),BackgroundTransparency=1,Text="",PlaceholderText="Search commands...",PlaceholderColor3=T.Sub,TextColor3=T.Text,Font=Enum.Font.GothamMedium,TextSize=13,TextXAlignment=Enum.TextXAlignment.Left,ClearTextOnFocus=false,Parent=SearchWrap})
 local Scroll = New("ScrollingFrame",{Size=UDim2.new(1,0,1,-48),Position=UDim2.new(0,0,0,46),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=4,ScrollBarImageColor3=T.Accent,CanvasSize=UDim2.new(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,Parent=Content})
 New("UIListLayout",{Padding=UDim.new(0,4),SortOrder=Enum.SortOrder.LayoutOrder,Parent=Scroll})
 
-local ConsoleBar = New("Frame",{Size=UDim2.new(1,-192,0,38),Position=UDim2.new(0,188,1,-48),BackgroundColor3=T.Bg2,BorderSizePixel=0,Parent=Main}); Corner(9); Stroke(T.Accent,1).Parent = ConsoleBar
+local ConsoleBar = New("Frame",{Size=UDim2.new(1,-(sidebarW+20),0,38),Position=UDim2.new(0,sidebarW+10,1,-48),BackgroundColor3=T.Bg2,BorderSizePixel=0,Parent=Main}); Corner(9); Stroke(T.Accent,1).Parent = ConsoleBar
 New("TextLabel",{Size=UDim2.new(0,26,1,0),BackgroundTransparency=1,Text="›",TextColor3=T.Accent,Font=Enum.Font.GothamBold,TextSize=20,Parent=ConsoleBar})
 local ConsoleBox = New("TextBox",{Size=UDim2.new(1,-30,1,0),Position=UDim2.new(0,24,0,0),BackgroundTransparency=1,Text="",PlaceholderText=";command arg",PlaceholderColor3=T.Sub,TextColor3=T.Text,Font=Enum.Font.Code,TextSize=13,TextXAlignment=Enum.TextXAlignment.Left,ClearTextOnFocus=false,Parent=ConsoleBar})
 
@@ -224,8 +218,6 @@ local function giveTool(name, target)
     h.Transparency = 0; h.Color = Color3.fromRGB(120,120,120)
 end
 
--- ▼ Modern replacement for the removed Ray API. Works on all current engines.
---   Returns (part, position, normal) or (nil) if no hit.
 local function raycastFromViewport(x, y)
     local cam = Workspace.CurrentCamera
     local ray = cam:ViewportPointToRay(x, y)
@@ -237,9 +229,6 @@ local function raycastFromViewport(x, y)
     return result.Instance, result.Position, result.Normal
 end
 
--- ▼ HttpGet wrapper — works on executors with `game:HttpGet`, `syn.request`,
---   `fluxus.request`, `http_request`, or just `request`. Falls back to
---   HttpService:GetAsync (will fail in normal games due to HttpEnabled).
 local function httpGet(url)
     if typeof(game.HttpGet) == "function" then
         local ok, res = pcall(function() return game:HttpGet(url) end)
@@ -256,7 +245,7 @@ local function httpGet(url)
 end
 
 -- =========================================================
--- 🏠 HOME
+-- HOME
 -- =========================================================
 local function hop()
     local body = httpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100")
@@ -313,7 +302,7 @@ for _,c in ipairs({
 }) do C("Home", c[1], c[2], Safe(c[3])) end
 
 -- =========================================================
--- 👤 PLAYER
+-- PLAYER
 -- =========================================================
 local playerActions = {
     {"God Mode", god}, {"Ungod", ungod},
@@ -377,7 +366,7 @@ local playerActions = {
 for _,a in ipairs(playerActions) do C("Player", a[1], "Player: "..a[1], Safe(a[2])) end
 
 -- =========================================================
--- 🏃 MOVEMENT
+-- MOVEMENT
 -- =========================================================
 for _,v in ipairs({8,16,25,32,40,50,60,75,100,125,150,200,250,300,400,500,750,1000}) do
     C("Movement","WalkSpeed "..v, "Set WalkSpeed "..v, Safe(function() ws(v) end))
@@ -454,7 +443,7 @@ for _,c in ipairs({
 }) do C("Movement", c[1], c[2], Safe(c[3])) end
 
 -- =========================================================
--- ⚔️ COMBAT
+-- COMBAT
 -- =========================================================
 for _,c in ipairs({
     {"Aimbot Basic","Aim at nearest head", function()
@@ -592,7 +581,7 @@ for _,c in ipairs({
 }) do C("Combat", c[1], c[2], Safe(c[3])) end
 
 -- =========================================================
--- 🌍 WORLD
+-- WORLD
 -- =========================================================
 for _,g in ipairs({0,5,10,20,30,40,50,60,80,100,150,200,196.2}) do
     C("World","Gravity "..g, "Set gravity "..g, Safe(function() Workspace.Gravity=g end))
@@ -650,7 +639,7 @@ for _,c in ipairs({
 }) do C("World", c[1], c[2], Safe(c[3])) end
 
 -- =========================================================
--- 🎨 VISUAL
+-- VISUAL
 -- =========================================================
 for _,f in ipairs({40,60,70,80,90,100,110,120,140}) do
     C("Visual","FOV "..f, "Set FOV "..f, Safe(function() Workspace.CurrentCamera.FieldOfView=f end))
@@ -693,7 +682,7 @@ for _,c in ipairs({
 }) do C("Visual", c[1], c[2], Safe(c[3])) end
 
 -- =========================================================
--- ✈️ TELEPORT
+-- TELEPORT
 -- =========================================================
 C("Teleport","Spawn","TP to spawn",Safe(function()
     local sp = Workspace:FindFirstChildOfClass("SpawnLocation")
@@ -735,7 +724,7 @@ for _,c in ipairs({
 }) do C("Teleport", c[1], c[2], Safe(c[3])) end
 
 -- =========================================================
--- 🚗 VEHICLES
+-- VEHICLES
 -- =========================================================
 for _,c in ipairs({
     {"Unanchor Vehicles","Unanchor vehicle seats", function() for _,v in ipairs(Workspace:GetDescendants()) do if v:IsA("VehicleSeat") then v.Anchored=false end end end},
@@ -773,7 +762,7 @@ for _,c in ipairs({
 }) do C("Vehicles", c[1], c[2], Safe(c[3])) end
 
 -- =========================================================
--- 🎮 FUN
+-- FUN
 -- =========================================================
 for i=1,10 do
     local spd=i*0.5
@@ -892,7 +881,7 @@ for _,c in ipairs({
 }) do C("Fun", c[1], c[2], Safe(c[3])) end
 
 -- =========================================================
--- ⚙️ MISC
+-- MISC
 -- =========================================================
 for _,c in ipairs({
     {"Print Workspace","Print workspace info", function() print("Children:", #Workspace:GetChildren()) Notify("Printed","ok") end},
@@ -968,7 +957,6 @@ local ActiveTab = "Home"
 local TabButtons = {}
 
 local function RefreshList()
-    -- Only remove direct TextButton children; UIListLayout and UIPadding survive.
     for _,c in ipairs(Scroll:GetChildren()) do
         if c:IsA("TextButton") then c:Destroy() end
     end
@@ -1013,8 +1001,13 @@ for i,tab in ipairs(TabOrder) do
     local Btn = New("TextButton",{Size=UDim2.new(1,0,0,30),BackgroundColor3=T.Surface,Text="",AutoButtonColor=false,LayoutOrder=i,Parent=Sidebar})
     Corner(8)
     New("TextLabel",{Size=UDim2.new(0,24,1,0),Position=UDim2.new(0,6,0,0),BackgroundTransparency=1,Text=TabIcons[tab] or "•",TextSize=13,Parent=Btn})
-    New("TextLabel",{Name="TabLabel",Size=UDim2.new(1,-56,1,0),Position=UDim2.new(0,28,0,0),BackgroundTransparency=1,Text=tab,TextColor3=T.Sub,Font=Enum.Font.GothamMedium,TextSize=12,TextXAlignment=Enum.TextXAlignment.Left,Parent=Btn})
-    New("TextLabel",{Size=UDim2.new(0,24,1,0),Position=UDim2.new(1,-28,0,0),BackgroundTransparency=1,Text=tostring(count),TextColor3=T.Accent,Font=Enum.Font.Gotham,TextSize=10,TextXAlignment=Enum.TextXAlignment.Right,Parent=Btn})
+    
+    -- Only render the text label on desktop (mobile sidebar is icon-only)
+    if not isMobile then
+        New("TextLabel",{Name="TabLabel",Size=UDim2.new(1,-56,1,0),Position=UDim2.new(0,28,0,0),BackgroundTransparency=1,Text=tab,TextColor3=T.Sub,Font=Enum.Font.GothamMedium,TextSize=12,TextXAlignment=Enum.TextXAlignment.Left,Parent=Btn})
+        New("TextLabel",{Size=UDim2.new(0,24,1,0),Position=UDim2.new(1,-28,0,0),BackgroundTransparency=1,Text=tostring(count),TextColor3=T.Accent,Font=Enum.Font.Gotham,TextSize=10,TextXAlignment=Enum.TextXAlignment.Right,Parent=Btn})
+    end
+
     Btn.MouseEnter:Connect(function() if ActiveTab ~= tab then Tween(Btn,.15,{BackgroundColor3=T.Surface2}) end end)
     Btn.MouseLeave:Connect(function() if ActiveTab ~= tab then Tween(Btn,.15,{BackgroundColor3=T.Surface}) end end)
     Btn.MouseButton1Click:Connect(function() SelectTab(tab) end)
@@ -1080,4 +1073,29 @@ end)
 CmdCount.Text = "• "..#Commands.." commands"
 SelectTab("Home")
 
-print("[InfiniteAdminV4] Loaded — "..#Commands.." commands. RSHIFT toggles.")
+-- ▼ Mobile Toggle Button — because phones don't have RSHIFT.
+if isMobile then
+    local toggleBtn = New("TextButton",{
+        Size=UDim2.new(0, 50, 0, 50),
+        Position=UDim2.new(1, -70, 0, 70),
+        BackgroundColor3=T.Accent,
+        Text="☰",
+        TextColor3=T.Text,
+        Font=Enum.Font.GothamBold,
+        TextSize=24,
+        Parent=ScreenGui
+    })
+    Corner(25)
+    toggleBtn.MouseButton1Click:Connect(function()
+        Main.Visible = not Main.Visible
+        if Main.Visible then
+            Main.Size=UDim2.new(0,0,0,0)
+            Tween(Main,.28,{Size=UDim2.new(0,W,0,H)},Enum.EasingStyle.Back)
+            Tween(Blur,.25,{Size=6})
+        else
+            Blur.Size=0
+        end
+    end)
+end
+
+print("[InfiniteAdminV4] Loaded — "..#Commands.." commands. RSHIFT (or ☰) toggles.")
